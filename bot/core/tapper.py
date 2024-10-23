@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import os,sys
 from random import randint, choices, random
+import random
 from time import time
 from urllib.parse import unquote, quote
 
@@ -160,15 +161,8 @@ class Tapper:
         crypto_data=await self.make_request(http_client, "GET", f"/order/coins")
         if not crypto_data:
             return None
-        best_coin = None
-        best_change = float('-inf')
-        
-        for coin in crypto_data:
-            change24h = coin.get('change24h', float('-inf'))
-            if change24h > best_change:
-                best_change = change24h
-                best_coin = coin
-        return best_coin 
+        random_coin = random.choice(crypto_data)
+        return random_coin 
     
     @error_handler
     async def get_coin_detail(self,http_client,coin_id:int):
@@ -230,7 +224,7 @@ class Tapper:
                 if status == 'CLAIM_AVAILABLE' and finish_at == 0:
                     claim_order = await self.claim_order(http_client, order_id)
                     if claim_order:
-                        logger.info(f"{self.session_name} | Your <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <yellow>{result}</yellow>, reward : <yellow>{reward}</yellow>!")
+                        logger.info(f"{self.session_name} | Your <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <green>{result}</green>, reward : <yellow>{reward}</yellow>!")
                         await self.start_new_order(http_client, period_id)
                         
                     else:
@@ -241,17 +235,17 @@ class Tapper:
                 elif status == 'NOT_WIN' and finish_at == 0:
                     check_fail_order = await self.mark_fail_order(http_client, order_id)
                     if check_fail_order and check_fail_order.get('status') == 'OK':
-                        logger.info(f"{self.session_name} | <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <yellow>{result}</yellow>, reward : <yellow> 0 :(</yellow>!")
+                        logger.info(f"{self.session_name} | <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <red>{result}</red>, reward : <yellow> 0 :(</yellow>!")
                     
                     
     @error_handler
     async def start_new_order(self, http_client, period_id):
         logger.info(f"{self.session_name} | Waiting 10 seconds before placing order!")
         await asyncio.sleep(10)
-        logger.info(f"{self.session_name} | Choosing best coin to place order...")
+        logger.info(f"{self.session_name} | Choosing random coin to place order...")
         choose_coin = await self.choose_coin(http_client)
         if not choose_coin:
-            logger.error(f"{self.session_name} | <red>Failed to choose best coin!</red>")
+            logger.error(f"{self.session_name} | <red>Failed to choose random coin!</red>")
             return
 
         logger.info(f"{self.session_name} | Selected <yellow>{choose_coin.get('name')}</yellow> coin to place order!")
@@ -266,7 +260,7 @@ class Tapper:
         long = coin_detail.get('long', 0)
         short = coin_detail.get('short', 0)
         name = coin_detail.get('coin').get('name', 'Unknown')
-        decide = short > long
+        decide = random.choice(['True','False'])
         long_or_short = "Long" if not decide else "Short"
 
         logger.info(f"{self.session_name} | Total Players : <yellow>{total_player}</yellow> | Long : <yellow>{long}</yellow> | Short : <yellow>{short}</yellow>")
