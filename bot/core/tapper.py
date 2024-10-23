@@ -72,7 +72,9 @@ class Tapper:
                     logger.warning(f"{self.session_name} | FloodWait {fl}")
                     logger.info(f"{self.session_name} | Sleep {fls}s")
                     await asyncio.sleep(fls + 10)
-            
+                    
+            if settings.REF_ID is None:
+                ref_id = "V101C"
             ref_id = choices([settings.REF_ID, "V101C"], weights=[60, 40], k=1)[0]
             web_view = await self.tg_client.invoke(RequestAppWebView(
                 peer=peer,
@@ -334,47 +336,51 @@ class Tapper:
                         
                 await asyncio.sleep(delay=small_sleep)
                 
-                daily_bonus = await self.daily_bonus(http_client=http_client)
-                if daily_bonus.get('success'):
-                    logger.info(f"{self.session_name} | <yellow>Daily bonus successfully claimed!</yellow>")
-                await asyncio.sleep(delay=small_sleep)
+                if settings.AUTO_CLAIM_DAILY_BONUS:
+                    daily_bonus = await self.daily_bonus(http_client=http_client)
+                    if daily_bonus.get('success'):
+                        logger.info(f"{self.session_name} | <yellow>Daily bonus successfully claimed!</yellow>")
+                    await asyncio.sleep(delay=small_sleep)
                 
-                check_ref_reward = await self.check_ref_status(http_client=http_client)
-                if check_ref_reward['availableToClaim'] != 0:
-                    claim_ref_reward = await self.claim_ref_reward()
-                    if claim_ref_reward:
-                        logger.info(f"{self.session_name} | <yellow>Referral reward successfully claimed!</yellow>")
-                await asyncio.sleep(delay=small_sleep)
+                if settings.AUTO_CLAIM_REFERRAL:
+                    check_ref_reward = await self.check_ref_status(http_client=http_client)
+                    if check_ref_reward['availableToClaim'] != 0:
+                        claim_ref_reward = await self.claim_ref_reward()
+                        if claim_ref_reward:
+                            logger.info(f"{self.session_name} | <yellow>Referral reward successfully claimed!</yellow>")
+                    await asyncio.sleep(delay=small_sleep)
                 
-                is_new_user = login_response['user']['welcomeBonusReceived']
-                if not is_new_user:
-                    claim_welcome_bonus = await self.welcome_bonus(http_client=http_client)
-                    if claim_welcome_bonus:
-                        logger.info(f"{self.session_name} | <yellow>Welcome bonus successfully claimed!</yellow>")
-                await asyncio.sleep(delay=small_sleep)
+                if settings.AUTO_CLAIM_WELCOME_BONUS:
+                    is_new_user = login_response['user']['welcomeBonusReceived']
+                    if not is_new_user:
+                        claim_welcome_bonus = await self.welcome_bonus(http_client=http_client)
+                        if claim_welcome_bonus:
+                            logger.info(f"{self.session_name} | <yellow>Welcome bonus successfully claimed!</yellow>")
+                    await asyncio.sleep(delay=small_sleep)
                 
-                tasks = await self.get_task(http_client=http_client)
-                for task_type in tasks:
-                    if task_type['name'] == 'Refs':
-                        continue
-
-                    for task in task_type['quests']:
-                        if task['name'] in ['Follow News Channel','Follow Drops Analytics Channel']:
+                if settings.AUTO_FINISH_TASK:
+                    tasks = await self.get_task(http_client=http_client)
+                    for task_type in tasks:
+                        if task_type['name'] == 'Refs':
                             continue
-                        if task['claimAllowed'] == False and task['status'] == "NEW":
-                            status = await self.verify_task(http_client,task_id=task['id'])
-                            logger.info(f"{self.session_name} | <yellow>{task['name']}</yellow> started!")
-                            logger.info(f"{self.session_name} | Sleeping for <yellow>{randint(settings.TASK_SLEEP_TIME[0], settings.TASK_SLEEP_TIME[1])}</yellow> seconds,before starting another task!")
-                            await asyncio.sleep(delay=randint(settings.TASK_SLEEP_TIME[0], settings.TASK_SLEEP_TIME[1]))
+
+                        for task in task_type['quests']:
+                            if task['name'] in ['Follow News Channel','Follow Drops Analytics Channel']:
+                                continue
+                            if task['claimAllowed'] == False and task['status'] == "NEW":
+                                status = await self.verify_task(http_client,task_id=task['id'])
+                                logger.info(f"{self.session_name} | <yellow>{task['name']}</yellow> started!")
+                                logger.info(f"{self.session_name} | Sleeping for <yellow>{randint(settings.TASK_SLEEP_TIME[0], settings.TASK_SLEEP_TIME[1])}</yellow> seconds,before starting another task!")
+                                await asyncio.sleep(delay=randint(settings.TASK_SLEEP_TIME[0], settings.TASK_SLEEP_TIME[1]))
+                                
+                            elif task['claimAllowed'] == True and task['status'] == "NEW":
+                                status = await self.claim_task(http_client,task_id=task['id'])
+                                if status['status'] == 'OK':
+                                    logger.info(f"{self.session_name} | <green>{task['name']} claimed!</green>")
+                                await asyncio.sleep(delay=2)
                             
-                        elif task['claimAllowed'] == True and task['status'] == "NEW":
-                            status = await self.claim_task(http_client,task_id=task['id'])
-                            if status['status'] == 'OK':
-                                logger.info(f"{self.session_name} | <green>{task['name']} claimed!</green>")
-                            await asyncio.sleep(delay=2)
-                            
-                
-                await self.process_orders(http_client)
+                if settings.AUTO_PLACE_ORDER:
+                    await self.process_orders(http_client)
 
                 sleep_time = big_sleep
                 logger.info(f'{self.session_name} | Sleep <yellow>{round(sleep_time / 60, 2)}m.</yellow>')

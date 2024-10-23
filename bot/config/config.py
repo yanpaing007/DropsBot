@@ -14,9 +14,18 @@ class Settings(BaseSettings):
     BIG_SLEEP_TIME: list[int] = [3600,3700]
     TASK_SLEEP_TIME : list[int] = [40,60]
     
+    AUTO_CLAIM_REFERRAL: bool = True
+    AUTO_CLAIM_DAILY_BONUS: bool = True
+    AUTO_CLAIM_REFERRAL_BONUS: bool = True
+    AUTO_CLAIM_WELCOME_BONUS: bool = True
+    AUTO_FINISH_TASK: bool = True
+    AUTO_PLACE_ORDER: bool = True
+    
+    
+    
 
     USE_RANDOM_DELAY_IN_RUN: bool = True
-    RANDOM_DELAY_IN_RUN: list[int] = [0, 15]
+    RANDOM_DELAY_IN_RUN: list[int] = [3, 15]
 
     USE_PROXY_FROM_FILE: bool = False
 
