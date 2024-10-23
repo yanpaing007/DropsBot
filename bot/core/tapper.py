@@ -235,7 +235,8 @@ class Tapper:
                 elif status == 'NOT_WIN' and finish_at == 0:
                     check_fail_order = await self.mark_fail_order(http_client, order_id)
                     if check_fail_order and check_fail_order.get('status') == 'OK':
-                        logger.info(f"{self.session_name} | <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <red>{result}</red>, reward : <yellow> 0 :(</yellow>!")
+                        logger.info(f"{self.session_name} | Your <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <red>{result}</red>, reward : <yellow> 0 :(</yellow>")
+                        await self.start_new_order(http_client, period_id)
                     
                     
     @error_handler
