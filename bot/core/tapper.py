@@ -262,7 +262,7 @@ class Tapper:
         short = coin_detail.get('short', 0)
         name = coin_detail.get('coin').get('name', 'Unknown')
         decide = random.choice(['True','False'])
-        long_or_short = "Long" if not decide else "Short"
+        long_or_short = "Long" if decide == 'False' else "Short"
 
         logger.info(f"{self.session_name} | Total Players : <yellow>{total_player}</yellow> | Long : <yellow>{long}</yellow> | Short : <yellow>{short}</yellow>")
         logger.info(f"{self.session_name} | Placing {long_or_short} order for <yellow>{name}</yellow>!")
