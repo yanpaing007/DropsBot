@@ -20,6 +20,7 @@ import functools
 from bot.config import settings
 from bot.exceptions import InvalidSession
 from bot.utils import logger
+from bot.utils.api_check import check_base_url
 from .agents import generate_random_user_agent
 from .headers import headers
 
@@ -194,7 +195,7 @@ class Tapper:
         win = result.get('wins', 0)
         lose = result.get('loses', 0)
         win_rate = result.get('winRate', 0)
-        logger.info(f"{self.session_name} | Balance - [<yellow>{balance}</yellow>] DPS | Orders - [<yellow>{orders}</yellow>] | Wins - [<yellow>{win}</yellow>] | Loses - [<yellow>{lose}</yellow>] | Win Rate - [<yellow>{win_rate} %</yellow>]")
+        logger.info(f"{self.session_name} | Balance [<blue>{balance}</blue>] DPS | Orders [<blue>{orders}</blue>] | Wins [<blue>{win}</blue>] | Loses [<blue>{lose}</blue>] | Win Rate [<blue>{win_rate} %</blue>]")
         periods = get_order.get('periods', [])
 
         for item in periods:
@@ -208,14 +209,14 @@ class Tapper:
 
                 if order is None:
                     if balance > threshold:
-                        logger.info(f"{self.session_name} | Starting a new order in <yellow>slot:{period_id}</yellow>.")
+                        logger.info(f"{self.session_name} | Starting a new order in <blue>slot:{period_id}</blue>.")
                         await self.start_new_order(http_client, period_id)
                     else:
-                        logger.info(f"{self.session_name} | <yellow>Slot:{period_id}</yellow> is below balance threshold, skipping.")
+                        logger.info(f"{self.session_name} | <blue>Slot:{period_id}</blue> is below balance threshold, skipping.")
                     continue
 
                 order_id = order.get('id', None)
-                bet = "Long" if not order.get('short', None) else "Short"
+                bet = "<green>Long</green>" if not order.get('short', None) else "<light-red>Short</light-red>"
                 reward = int(order.get('reward', 0))
                 result = "Won" if order.get('result', None) else "Lose"
                 status = order.get('status', None)
@@ -224,24 +225,24 @@ class Tapper:
                 if status == 'CLAIM_AVAILABLE' and finish_at == 0:
                     claim_order = await self.claim_order(http_client, order_id)
                     if claim_order:
-                        logger.info(f"{self.session_name} | Your <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <green>{result}</green>, reward : <yellow>{reward}</yellow>!")
+                        logger.info(f"{self.session_name} | Your {bet} order in <blue>slot:{period_id}</blue> was <green>{result}</green>, reward : <blue>{reward}</blue>")
                         await self.start_new_order(http_client, period_id)
                         
                     else:
                         logger.error(f"{self.session_name} | <red>Failed to claim order!</red>")
                 elif status == 'PENDING':
-                    logger.info(f"{self.session_name} | Your <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> is still pending! Will finish in <yellow>{finish_at}</yellow> minutes.")
+                    logger.info(f"{self.session_name} | Your {bet} order in <blue>slot:{period_id}</blue> is still pending! Will finish in <blue>{finish_at}</blue> minutes.")
                     
                 elif status == 'NOT_WIN' and finish_at == 0:
                     check_fail_order = await self.mark_fail_order(http_client, order_id)
                     if check_fail_order and check_fail_order.get('status') == 'OK':
-                        logger.info(f"{self.session_name} | Your <yellow>{bet}</yellow> order in <yellow>slot:{period_id}</yellow> was <red>{result}</red>, reward : <yellow> 0 :(</yellow>")
+                        logger.info(f"{self.session_name} | Your {bet} order in <blue>slot:{period_id}</blue> was <light-red>{result}</light-red>, reward : <blue> 0</blue>")
                         await self.start_new_order(http_client, period_id)
                     
                     
     @error_handler
     async def start_new_order(self, http_client, period_id):
-        logger.info(f"{self.session_name} | Waiting 10 seconds before placing order!")
+        logger.info(f"{self.session_name} | Waiting <blue>10 seconds</blue> before placing order!")
         await asyncio.sleep(10)
         logger.info(f"{self.session_name} | Choosing random coin to place order...")
         choose_coin = await self.choose_coin(http_client)
@@ -249,7 +250,7 @@ class Tapper:
             logger.error(f"{self.session_name} | <red>Failed to choose random coin!</red>")
             return
 
-        logger.info(f"{self.session_name} | Selected <yellow>{choose_coin.get('name')}</yellow> coin to place order!")
+        logger.info(f"{self.session_name} | Selected <blue>{choose_coin.get('name')}</blue> coin to place order!")
         coin_id = choose_coin.get('id')
 
         coin_detail = await self.get_coin_detail(http_client, coin_id)
@@ -262,14 +263,14 @@ class Tapper:
         short = coin_detail.get('short', 0)
         name = coin_detail.get('coin').get('name', 'Unknown')
         decide = random.choice(['True','False'])
-        long_or_short = "Long" if decide == 'False' else "Short"
+        long_or_short = "<green>Long</green>" if decide == 'False' else "<light-red>Short</light-red>"
 
-        logger.info(f"{self.session_name} | Total Players : <yellow>{total_player}</yellow> | Long : <yellow>{long}</yellow> | Short : <yellow>{short}</yellow>")
-        logger.info(f"{self.session_name} | Placing {long_or_short} order for <yellow>{name}</yellow>!")
+        logger.info(f"{self.session_name} | Total Players : <blue>{total_player}</blue> | Long : <blue>{long}</blue> | Short : <blue>{short}</blue>")
+        logger.info(f"{self.session_name} | Placing {long_or_short} order for <blue>{name}</blue>!")
 
         place_order = await self.create_order(http_client, coin_id, period_id, decide)
         if place_order:
-            logger.info(f"{self.session_name} | Successfully placed <yellow>{long_or_short}</yellow> order on <yellow>{name}</yellow>!")
+            logger.info(f"{self.session_name} | Successfully placed {long_or_short} order on <blue>{name}</blue>!")
         else:
             logger.error(f"{self.session_name} | <red>Failed to place order!</red>")
         
@@ -280,7 +281,7 @@ class Tapper:
     async def run(self) -> None:        
         if settings.USE_RANDOM_DELAY_IN_RUN:
             random_delay = randint(settings.RANDOM_DELAY_IN_RUN[0], settings.RANDOM_DELAY_IN_RUN[1])
-            logger.info(f"{self.tg_client.name} | Bot will start in <yellow>{random_delay}s</yellow>")
+            logger.info(f"{self.tg_client.name} | Bot will start in <blue>{random_delay}s</blue>")
             await asyncio.sleep(delay=random_delay)
         
         proxy_conn = ProxyConnector().from_url(self.proxy) if self.proxy else None
@@ -297,6 +298,9 @@ class Tapper:
         
         while True:
             try:
+                if check_base_url() is False:
+                        sys.exit(
+                            "Detected api change! Stopped the bot for safety. Please raise an issue on the GitHub repository.")
                 
                 if http_client.closed:
                     if proxy_conn:
@@ -321,7 +325,7 @@ class Tapper:
                         http_client.headers["Authorization"] = f"Bearer {access_token}"
                         if login_response.get('user').get('usedRefLinkCode') is None:
                             apply_ref=await self.apply_ref(http_client= http_client,ref_id=ref_id)
-                            logger.info(f"{self.session_name} | <yellow>Referral code applied</yellow>") if apply_ref else logger.error(f"{self.session_name} | <red>Referral code not applied</red>")
+                            logger.info(f"{self.session_name} | <blue>Referral code applied</blue>") if apply_ref else logger.error(f"{self.session_name} | <red>Referral code not applied</red>")
                 if access_token:
                     http_client.headers["Authorization"] = f"Bearer {access_token}"
                     logger.info(f"{self.session_name} | <green>Logged in</green>")
@@ -334,7 +338,7 @@ class Tapper:
                 if settings.AUTO_CLAIM_DAILY_BONUS:
                     daily_bonus = await self.daily_bonus(http_client=http_client)
                     if daily_bonus.get('success'):
-                        logger.info(f"{self.session_name} | <yellow>Daily bonus successfully claimed!</yellow>")
+                        logger.success(f"{self.session_name} | Daily bonus successfully claimed!")
                     await asyncio.sleep(delay=small_sleep)
                 
                 if settings.AUTO_CLAIM_REFERRAL:
@@ -342,7 +346,7 @@ class Tapper:
                     if check_ref_reward['availableToClaim'] != 0:
                         claim_ref_reward = await self.claim_ref_reward()
                         if claim_ref_reward:
-                            logger.info(f"{self.session_name} | <yellow>Referral reward successfully claimed!</yellow>")
+                            logger.success(f"{self.session_name} | Referral reward successfully claimed!")
                     await asyncio.sleep(delay=small_sleep)
                 
                 if settings.AUTO_CLAIM_WELCOME_BONUS:
@@ -350,7 +354,7 @@ class Tapper:
                     if not is_new_user:
                         claim_welcome_bonus = await self.welcome_bonus(http_client=http_client)
                         if claim_welcome_bonus:
-                            logger.info(f"{self.session_name} | <yellow>Welcome bonus successfully claimed!</yellow>")
+                            logger.success(f"{self.session_name} | Welcome bonus successfully claimed!")
                     await asyncio.sleep(delay=small_sleep)
                 
                 if settings.AUTO_FINISH_TASK:
@@ -364,21 +368,21 @@ class Tapper:
                                 continue
                             if task['claimAllowed'] == False and task['status'] == "NEW":
                                 status = await self.verify_task(http_client,task_id=task['id'])
-                                logger.info(f"{self.session_name} | <yellow>{task['name']}</yellow> started!")
-                                logger.info(f"{self.session_name} | Sleeping for <yellow>{randint(settings.TASK_SLEEP_TIME[0], settings.TASK_SLEEP_TIME[1])}</yellow> seconds,before starting another task!")
+                                logger.info(f"{self.session_name} | <blue>{task['name']}</blue> started!")
+                                logger.info(f"{self.session_name} | Sleeping for <blue>{randint(settings.TASK_SLEEP_TIME[0], settings.TASK_SLEEP_TIME[1])}</blue> seconds,before starting another task!")
                                 await asyncio.sleep(delay=randint(settings.TASK_SLEEP_TIME[0], settings.TASK_SLEEP_TIME[1]))
                                 
                             elif task['claimAllowed'] == True and task['status'] == "NEW":
                                 status = await self.claim_task(http_client,task_id=task['id'])
                                 if status['status'] == 'OK':
-                                    logger.info(f"{self.session_name} | <green>{task['name']} claimed!</green>")
+                                    logger.success(f"{self.session_name} | <blue>{task['name']} claimed!</blue>")
                                 await asyncio.sleep(delay=2)
                             
                 if settings.AUTO_PLACE_ORDER:
                     await self.process_orders(http_client)
 
                 sleep_time = big_sleep
-                logger.info(f'{self.session_name} | Sleep <yellow>{round(sleep_time / 60, 2)}m.</yellow>')
+                logger.info(f'{self.session_name} | Sleep <blue>{round(sleep_time / 60, 2)}m.</blue>')
                 await asyncio.sleep(sleep_time)
                 await http_client.close()
                 if proxy_conn:
@@ -390,7 +394,7 @@ class Tapper:
             except Exception as error:
                 logger.error(f"{self.session_name} | Unknown error: {error}")
                 await asyncio.sleep(delay=3)
-                logger.info(f'{self.session_name} | Sleep <yellow>10m.</yellow>')
+                logger.info(f'{self.session_name} | Sleep <blue>10m.</blue>')
                 await asyncio.sleep(600)
                 
 

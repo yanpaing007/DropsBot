@@ -12,6 +12,7 @@ from bot.config import settings
 from bot.utils import logger
 from bot.core.tapper import run_tapper
 from bot.core.registrator import register_sessions
+from bot.utils.api_check import check_base_url, get_local_version_info, get_version_info
 
 
 start_text = """
@@ -78,6 +79,21 @@ async def get_tg_clients() -> list[Client]:
 async def process() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--action", type=int, help="Action to perform")
+
+    if check_base_url() is False:
+        sys.exit(
+            "Detected api change! Stopped the bot for safety.Please raise an issue on the GitHub repository.")
+    else:
+        logger.info("<blue>No change in API!</blue>")
+    github_version,message = get_version_info()
+    local_version = get_local_version_info()
+        
+    if github_version is not None and local_version is not None and message is not None:
+        if github_version == local_version:
+            logger.info(f"<blue>Bot is up to date! v{local_version}</blue>")
+        else:
+            logger.info(f"<blue>Bot is out of date, update the bot with command 'git pull', </blue><light-red>v{local_version}</light-red> <blue>> </blue><light-red>v{github_version}</light-red>")
+        logger.info(f"<blue>Developer message: {message}</blue>")
 
     logger.info(f"Detected {len(get_session_names())} sessions | {len(get_proxies())} proxies")
 
