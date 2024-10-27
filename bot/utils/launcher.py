@@ -84,7 +84,7 @@ async def process() -> None:
         sys.exit(
             "Detected api change! Stopped the bot for safety.Please raise an issue on the GitHub repository.")
     else:
-        logger.info("<blue>No change in API!</blue>")
+        logger.info("<green>No change in API!</green>")
     github_version,message = get_version_info()
     local_version = get_local_version_info()
         
