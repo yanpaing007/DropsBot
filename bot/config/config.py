@@ -9,9 +9,9 @@ class Settings(BaseSettings):
 
     REF_ID: str = 'V101C'
     
-    FAKE_USERAGENT: bool = True
+    FAKE_USERAGENT: bool = False
     MIN_DELAY: list[int] = [2,5]
-    BIG_SLEEP_TIME: list[int] = [3600,3700]
+    BIG_SLEEP_TIME: list[int] = [3900,4000]
     TASK_SLEEP_TIME : list[int] = [40,60]
     
     AUTO_CLAIM_REFERRAL: bool = True
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     
 
     USE_RANDOM_DELAY_IN_RUN: bool = True
-    RANDOM_DELAY_IN_RUN: list[int] = [3, 15]
+    RANDOM_DELAY_IN_RUN: list[int] = [5, 15]
 
     USE_PROXY_FROM_FILE: bool = False
 

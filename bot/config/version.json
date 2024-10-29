@@ -1,4 +1,4 @@
 {
-    "version": 1.1,
-    "message": "v1.1 | added check daily login next day | clean logs "
+    "version": 1.2,
+    "message": "v1.2 | instead of stopping the bot in case of api change,stop bot operation and sleep the bot for 10 minutes and try again.This will fix stopping the bot due to unstable network or loss connection."
 }

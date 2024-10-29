@@ -299,8 +299,10 @@ class Tapper:
         while True:
             try:
                 if check_base_url() is False:
-                        sys.exit(
-                            "Detected api change! Stopped the bot for safety. Please raise an issue on the GitHub repository.")
+                        logger.warning(f"{self.session_name} | <yellow>API might have changed.Retrying in 10 minutes...</yellow>")
+                        logger.info(f"{self.session_name} | <light-red>Sleep 10m</light-red>")
+                        await asyncio.sleep(600)
+                        continue
                 
                 if http_client.closed:
                     if proxy_conn:
