@@ -278,7 +278,17 @@ class Tapper:
 
     
     
-    async def run(self) -> None:        
+    async def run(self) -> None:
+        
+        async def reconnect_and_delay(http_client, delay):
+            await http_client.close()
+            if proxy_conn and not proxy_conn.closed:
+                proxy_conn.close()
+            
+            logger.info(f'{self.session_name} | Sleep <light-red>{delay / 60:.2f}m.</light-red>')
+            await asyncio.sleep(delay)
+            
+                    
         if settings.USE_RANDOM_DELAY_IN_RUN:
             random_delay = randint(settings.RANDOM_DELAY_IN_RUN[0], settings.RANDOM_DELAY_IN_RUN[1])
             logger.info(f"{self.tg_client.name} | Bot will start in <cyan>{random_delay}s</cyan>")
@@ -394,12 +404,16 @@ class Tapper:
                         proxy_conn.close()
             except InvalidSession as error:
                 raise error
-
+        
+            except (aiohttp.ClientConnectionError, aiohttp.ClientPayloadError, aiohttp.ClientResponseError,
+                    aiohttp.ClientTimeout, aiohttp.ServerDisconnectedError, aiohttp.ServerTimeoutError,
+                    asyncio.TimeoutError) as error:
+                logger.error(f"{self.session_name} | {error.__class__.__name__} error: {error}")
+                await reconnect_and_delay(http_client, randint(600, 1200))
+            
             except Exception as error:
                 logger.error(f"{self.session_name} | Unknown error: {error}")
-                await asyncio.sleep(delay=3)
-                logger.info(f'{self.session_name} | Sleep <light-red>10m.</light-red>')
-                await asyncio.sleep(600)
+                await reconnect_and_delay(http_client, randint(600, 1200))
                 
 
 
