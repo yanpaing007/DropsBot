@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     AUTO_CLAIM_WELCOME_BONUS: bool = True
     AUTO_FINISH_TASK: bool = True
     AUTO_PLACE_ORDER: bool = True
+    NIGHT_SLEEP: bool = True   #strongly recommend to enable this
+    NIGHT_SLEEP_TIME: list[list] = [[21 , 23],[2 , 4]] # 10,11pm to 3,4am
     
     
     

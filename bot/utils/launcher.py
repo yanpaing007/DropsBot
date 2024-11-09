@@ -90,10 +90,10 @@ async def process() -> None:
         
     if github_version is not None and local_version is not None and message is not None:
         if github_version == local_version:
-            logger.info(f"<blue>Bot is up to date! v{local_version}</blue>")
+            logger.info(f"<green>Bot is up to date! v{local_version}</green>")
         else:
-            logger.info(f"<blue>Bot is out of date, update the bot with command 'git pull', </blue><light-red>v{local_version}</light-red> <blue>> </blue><light-red>v{github_version}</light-red>")
-        logger.info(f"<blue>Developer message: {message}</blue>")
+            logger.info(f"<yellow>Bot is out of date, update the bot with command 'git pull', </yellow><light-red>v{local_version}</light-red> <blue>> </blue><light-red>v{github_version}</light-red>")
+        logger.info(f"<cyan>Developer message: {message}</cyan>")
 
     logger.info(f"Detected {len(get_session_names())} sessions | {len(get_proxies())} proxies")
 

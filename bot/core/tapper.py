@@ -273,10 +273,21 @@ class Tapper:
             logger.info(f"{self.session_name} | Successfully placed {long_or_short} order on <cyan>{name}</cyan>!")
         else:
             logger.error(f"{self.session_name} | <red>Failed to place order!</red>")
-        
-        
+            
+    async def night_sleep(self):
+        now = datetime.now()
+        start_hour = randint(settings.NIGHT_SLEEP_TIME[0][0], settings.NIGHT_SLEEP_TIME[0][1])
+        end_hour = randint(settings.NIGHT_SLEEP_TIME[1][0], settings.NIGHT_SLEEP_TIME[1][1])
 
-    
+        if now.hour >= start_hour or now.hour < end_hour:
+            wake_up_time = now.replace(hour=end_hour, minute=randint(0,59), second=randint(0,59), microsecond=0)
+            if now.hour >= start_hour:
+                wake_up_time += timedelta(days=1)
+            sleep_duration = (wake_up_time - now).total_seconds()
+            logger.info(f"{self.session_name} |<yellow> Night sleep activated,Bot is going to sleep until </yellow><light-red>{wake_up_time.strftime('%I:%M %p')}</light-red>.")
+            await asyncio.sleep(sleep_duration)
+        
+        
     
     async def run(self) -> None:        
         if settings.USE_RANDOM_DELAY_IN_RUN:
@@ -303,6 +314,9 @@ class Tapper:
                         logger.info(f"{self.session_name} | <light-red>Sleep 10m</light-red>")
                         await asyncio.sleep(600)
                         continue
+                
+                if settings.NIGHT_SLEEP:
+                    await self.night_sleep()
                 
                 if http_client.closed:
                     if proxy_conn:
