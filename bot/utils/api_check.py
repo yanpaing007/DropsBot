@@ -69,12 +69,7 @@ def check_base_url():
             else:
                 return False
     else:
-        logger.error("Could not find any main.js format. Dumping page content for inspection:")
-        try:
-            response = requests.get(base_url)
-            logger.error(response.text[:1000])
-        except requests.RequestException as e:
-            logger.error(f"Error fetching the base URL for content dump: {e}")
+        logger.error("Could not find any main.js format.Exiting...")
         return False
 
 def get_version_info():
