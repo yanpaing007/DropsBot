@@ -328,17 +328,18 @@ class Tapper:
                     if settings.FAKE_USERAGENT:            
                         http_client.headers['User-Agent'] = generate_random_user_agent(device_type='android', browser_type='chrome')     
                 current_time = time()
+                access_token = None
                 if current_time >= token_expiration:
                     if (token_expiration != 0):
                         logger.info(f"{self.session_name} | Token expired, refreshing...")
                     ref_id, init_data = await self.get_tg_web_data()
                     login_response = await self.login(http_client=http_client, tg_web_data=init_data)
-                
-                    
+            
                     if login_response and "jwt" in login_response:
                         access_token = login_response.get("jwt").get("access").get("token")
                         token_expiration = current_time + 3600
                         http_client.headers["Authorization"] = f"Bearer {access_token}"
+                        http_client.headers['x-tg-data'] = init_data
                         if login_response.get('user').get('usedRefLinkCode') is None:
                             apply_ref=await self.apply_ref(http_client= http_client,ref_id=ref_id)
                             logger.info(f"{self.session_name} | <cyan>Referral code applied</cyan>") if apply_ref else logger.error(f"{self.session_name} | <red>Referral code not applied</red>")
@@ -347,6 +348,8 @@ class Tapper:
                     logger.info(f"{self.session_name} | <green>Logged in</green>")
                 else:
                     logger.error(f"{self.session_name} | Fail to login!")
+                    logger.info(f'{self.session_name} | Sleep <light-red>10m.</light-red>')
+                    await asyncio.sleep(600)
                     continue
                         
                 await asyncio.sleep(delay=small_sleep)
@@ -361,7 +364,8 @@ class Tapper:
                                 
                 if settings.AUTO_CLAIM_REFERRAL:
                     check_ref_reward = await self.check_ref_status(http_client=http_client)
-                    if check_ref_reward['availableToClaim'] != 0:
+                    ref_reward = check_ref_reward.get('availableToClaim',0)
+                    if ref_reward != 0:
                         claim_ref_reward = await self.claim_ref_reward()
                         if claim_ref_reward:
                             logger.success(f"{self.session_name} | Referral reward successfully claimed!")
