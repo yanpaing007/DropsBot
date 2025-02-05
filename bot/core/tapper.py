@@ -333,13 +333,14 @@ class Tapper:
                     if (token_expiration != 0):
                         logger.info(f"{self.session_name} | Token expired, refreshing...")
                     ref_id, init_data = await self.get_tg_web_data()
+                    http_client.headers['x-tg-data'] = init_data
                     login_response = await self.login(http_client=http_client, tg_web_data=init_data)
             
                     if login_response and "jwt" in login_response:
                         access_token = login_response.get("jwt").get("access").get("token")
                         token_expiration = current_time + 3600
                         http_client.headers["Authorization"] = f"Bearer {access_token}"
-                        http_client.headers['x-tg-data'] = init_data
+                        
                         if login_response.get('user').get('usedRefLinkCode') is None:
                             apply_ref=await self.apply_ref(http_client= http_client,ref_id=ref_id)
                             logger.info(f"{self.session_name} | <cyan>Referral code applied</cyan>") if apply_ref else logger.error(f"{self.session_name} | <red>Referral code not applied</red>")
